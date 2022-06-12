@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preload - Hephaestus</title>
+    <link rel="stylesheet" href="../assets/style/index.css">
+</head>
+<body>
+<xmp>
+ _      _____    _____  _____  ______ _      ____          _____  
+| |    |  __ \  |  __ \|  __ \|  ____| |    / __ \   /\   |  __ \ 
+| |    | |  | | | |__) | |__) | |__  | |   | |  | | /  \  | |  | |
+| |    | |  | | |  ___/|  _  /|  __| | |   | |  | |/ /\ \ | |  | |
+| |____| |__| | | |    | | \ \| |____| |___| |__| / ____ \| |__| |
+|______|_____/  |_|    |_|  \_\______|______\____/_/    \_\_____/ 
+                                                                    
+Bem vindo :p, hoje vou escrever sobre LD_PRELOAD.
+
+Básicamente, o LD_PRELOAD é um variável do sistema que indica qual shared library vai ser iniciada antes do programa. E com isso podemos sobreescrever funções de um programa em C.
+Um Exemplo:
+
++==============================+
+main.c:
+
+#include <stdlib.h>
+#include <stdio.h>
+
+int main() {
+    printf("Olá mundo");
+
+    return 0;
+}
++==============================+
+
+Como visto no código acima, este programa vai exibir "Olá mundo" na tela, e agora que vem a parte legal, 
+com o LD_PRELOAD podemos fazer nossa função ser executada antes do main, para fazer isso precisamos usar o LD_PRELOAD, mas e agora? como vou fazer essa função ser executada antes do programa?
+Simples, vamos criar um novo arquivo chamado hook.c, neste arquivo iremos fazer a shared library.
+
++==============================+
+hook.c:
+
+#define _GNU_SOURCE
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
+static void init(void) __attribute__((constructor));
+static void init(void) {
+    printf("Iniciei primeiro :p\n");
+}
++==============================+
+
+Agora para compilar:
+$ gcc main.c -o main
+$ gcc hook.c -o hook.so -fPIC -shared -ldl
+
+Vamos testar: 
+$ LD_PRELOAD=./hook1.so ./main
+
+Iniciei primeiro :p
+49 eh o número.
+
++==============================+
+Note que: passamos o LD_PRELOAD antes do executável, logo, nossa shared library é executada antes do programa.<br>
+
+Mas o que é "__attribute__" e "((constructor))" ?
+O __attribute__ é uma diretiva em c, é normalmente utilizada para atribuir uma declaração de código, isso dá ao código atributos adicionais que pode ajudar o compilador
+a incoporar otimizações elicitar avisos úteis para o consumidor desse código.
+Melhor dizendo, as diretivas __attribute__ fornecem contexto. O valor de fornecer contexto ao código não pode ser exagerado. Os desenvolvedores fornecem contexto por meio de declarações e
+comentários explícitos desde antes do advento do circuito integrado, mas o valor de fornecer contexto que pode ser avaliado por um compilador nos dá um nível totalmente novo de controle.
+Ao fornecer explicitamente os limites de como uma API se comporta para o compilador, um programador pode obter alguns benefícios tangíveis. As diretivas podem ser usadas para impor a conformidade com a forma como outros programadores consomem essa API. 
+Em outros casos, as diretivas __attribute__ podem ajudar o compilador a otimizar - às vezes com grandes ganhos de desempenho.
+
+Mas nesse caso, informamos o compilador para executar nossa função antes da função main definida. 
+
+                ______ _   _ _____                  
+                |  ____| \ | |  __ \                 
+ ______ ______  | |__  |  \| | |  | |  ______ ______ 
+|______|______| |  __| | . ` | |  | | |______|______|
+                | |____| |\  | |__| |                
+                |______|_| \_|_____/                 
+                                              
+                                                      
+</xmp>
+</body>
+</html>
